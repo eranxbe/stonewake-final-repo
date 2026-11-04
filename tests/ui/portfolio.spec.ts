@@ -11,6 +11,6 @@ test('ui 10 portfolio', { tag: ['@ui', '@regression'] }, async ({ loggedInPage, 
   await expect(portfolioPage.tileNotAssessed).toBeVisible();
 
   await expect(portfolioPage.firstEntity()).toBeVisible();
-  const name = await portfolioPage.openFirstEntity();
-  await expect(loggedInPage.locator('h1')).toHaveText(name);
+  const entityDisplayName = await portfolioPage.openFirstEntity();
+  await expect(loggedInPage.locator('h1')).toHaveText(entityDisplayName);
 });

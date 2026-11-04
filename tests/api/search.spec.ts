@@ -2,29 +2,29 @@ import { test, expect } from '../../src/fixtures/test';
 import { search } from '../../src/constants/data';
 
 test('api 10 search', { tag: ['@api', '@regression'] }, async ({ api }) => {
-  const r = await api.search({ q: search.bank, limit: 3 });
-  expect(r.status()).toBe(200);
+  const searchResponse = await api.search({ q: search.bank, limit: 3 });
+  expect(searchResponse.status()).toBe(200);
 
-  const b = await r.json();
-  expect(b.query).toBe(search.bank);
-  expect(b.hits.length).toBeGreaterThanOrEqual(1);
-  expect(b.hits.length).toBeLessThanOrEqual(3);
+  const searchJson = await searchResponse.json();
+  expect(searchJson.query).toBe(search.bank);
+  expect(searchJson.hits.length).toBeGreaterThanOrEqual(1);
+  expect(searchJson.hits.length).toBeLessThanOrEqual(3);
 
-  for (const h of b.hits) {
-    expect(typeof h.node_id).toBe('number');
-    expect(typeof h.label).toBe('string');
-    expect(h.score).toBeGreaterThanOrEqual(0);
-    expect(h.score).toBeLessThanOrEqual(1);
+  for (const searchHit of searchJson.hits) {
+    expect(typeof searchHit.node_id).toBe('number');
+    expect(typeof searchHit.label).toBe('string');
+    expect(searchHit.score).toBeGreaterThanOrEqual(0);
+    expect(searchHit.score).toBeLessThanOrEqual(1);
   }
 
   expect((await (await api.search({ q: search.noApiHits })).json()).hits).toEqual([]);
   expect((await api.search()).status()).toBe(422);
 
-  const r4 = await api.search({ q: search.tooShort });
-  expect(r4.status()).toBe(422);
-  expect((await r4.json()).detail[0].msg).toBe('String should have at least 2 characters');
+  const queryTooShortResponse = await api.search({ q: search.tooShort });
+  expect(queryTooShortResponse.status()).toBe(422);
+  expect((await queryTooShortResponse.json()).detail[0].msg).toBe('String should have at least 2 characters');
 
-  const r5 = await api.search({ q: search.bank, limit: 99999 });
-  expect(r5.status()).toBe(422);
-  expect((await r5.json()).detail[0].msg).toBe('Input should be less than or equal to 25');
+  const limitTooLargeResponse = await api.search({ q: search.bank, limit: 99999 });
+  expect(limitTooLargeResponse.status()).toBe(422);
+  expect((await limitTooLargeResponse.json()).detail[0].msg).toBe('Input should be less than or equal to 25');
 });

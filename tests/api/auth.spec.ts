@@ -3,30 +3,30 @@ import { credentials } from '../../src/constants/data';
 import { apiErrors } from '../../src/constants/messages';
 
 test('api 2 me', { tag: ['@api', '@smoke'] }, async ({ api }) => {
-  const r = await api.me();
-  expect(r.status()).toBe(200);
+  const meResponse = await api.me();
+  expect(meResponse.status()).toBe(200);
 
-  const b = await r.json();
-  expect(b.credential).toBe('api_key');
-  expect(typeof b.role).toBe('string');
-  expect(b.role).toMatch(/^[a-z_]+$/);
-  expect(typeof b.team_scope.all_teams).toBe('boolean');
-  expect(Array.isArray(b.team_scope.teams)).toBe(true);
+  const meJson = await meResponse.json();
+  expect(meJson.credential).toBe('api_key');
+  expect(typeof meJson.role).toBe('string');
+  expect(meJson.role).toMatch(/^[a-z_]+$/);
+  expect(typeof meJson.team_scope.all_teams).toBe('boolean');
+  expect(Array.isArray(meJson.team_scope.teams)).toBe(true);
 
-  if (!b.team_scope.all_teams) {
-    expect(b.team_scope.teams.length).toBeGreaterThan(0);
-    for (const t of b.team_scope.teams) {
-      expect(typeof t.id).toBe('string');
-      expect(typeof t.name).toBe('string');
+  if (!meJson.team_scope.all_teams) {
+    expect(meJson.team_scope.teams.length).toBeGreaterThan(0);
+    for (const team of meJson.team_scope.teams) {
+      expect(typeof team.id).toBe('string');
+      expect(typeof team.name).toBe('string');
     }
   }
 
-  expect(r.headers()['x-ratelimit-limit']).toMatch(/^\d+$/);
-  expect(r.headers()['x-ratelimit-remaining']).toMatch(/^\d+$/);
+  expect(meResponse.headers()['x-ratelimit-limit']).toMatch(/^\d+$/);
+  expect(meResponse.headers()['x-ratelimit-remaining']).toMatch(/^\d+$/);
 });
 
 test('api 3 no token', { tag: ['@api', '@smoke'] }, async ({ api }) => {
-  const checks = [
+  const unauthenticatedResponses = [
     await api.me('none'),
     await api.portfolio(undefined, 'none'),
     await api.countries('none'),
@@ -34,25 +34,25 @@ test('api 3 no token', { tag: ['@api', '@smoke'] }, async ({ api }) => {
     await api.citationsResolve('none'),
   ];
 
-  for (const r of checks) {
-    expect(r.status()).toBe(401);
-    expect(await r.json()).toEqual(apiErrors.unauthenticated);
+  for (const response of unauthenticatedResponses) {
+    expect(response.status()).toBe(401);
+    expect(await response.json()).toEqual(apiErrors.unauthenticated);
   }
 });
 
 test('api 4 bad keys', { tag: ['@api', '@regression'] }, async ({ api }) => {
-  const r = await api.me({ bearer: credentials.invalidApiKey });
-  expect(r.status()).toBe(401);
-  expect(await r.json()).toEqual(apiErrors.unauthenticated);
+  const invalidBearerMeResponse = await api.me({ bearer: credentials.invalidApiKey });
+  expect(invalidBearerMeResponse.status()).toBe(401);
+  expect(await invalidBearerMeResponse.json()).toEqual(apiErrors.unauthenticated);
 
-  const r2 = await api.me({ bearer: credentials.notAKey });
-  expect(r2.status()).toBe(401);
-  expect(await r2.json()).toEqual(apiErrors.unauthenticated);
+  const notAKeyMeResponse = await api.me({ bearer: credentials.notAKey });
+  expect(notAKeyMeResponse.status()).toBe(401);
+  expect(await notAKeyMeResponse.json()).toEqual(apiErrors.unauthenticated);
 
-  const r3 = await api.me({ authorization: credentials.basicAuth });
-  expect(r3.status()).toBe(401);
-  expect(await r3.json()).toEqual(apiErrors.unauthenticated);
+  const basicAuthMeResponse = await api.me({ authorization: credentials.basicAuth });
+  expect(basicAuthMeResponse.status()).toBe(401);
+  expect(await basicAuthMeResponse.json()).toEqual(apiErrors.unauthenticated);
 
-  const r4 = await api.portfolio(undefined, { bearer: credentials.invalidApiKey });
-  expect(r4.status()).toBe(401);
+  const invalidBearerPortfolioResponse = await api.portfolio(undefined, { bearer: credentials.invalidApiKey });
+  expect(invalidBearerPortfolioResponse.status()).toBe(401);
 });
