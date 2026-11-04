@@ -1,0 +1,782 @@
+================================================================================
+SOFTWARE TEST PLAN (STP)
+Stonewake Playwright Test Suite
+================================================================================
+Document:     STP.txt
+Product:      Stonewake (web app + API)
+Framework:    Playwright Test (@playwright/test 1.64.1)
+Repo:         stonewake-final-repo
+Date:         2026-11-04
+================================================================================
+
+
+1. PURPOSE
+----------
+This Software Test Plan (STP) describes the automated tests executed against
+Stonewake. It covers UI end-to-end flows, API contract/behavior checks, and an
+opt-in black-box security suite.
+
+
+2. SCOPE
+--------
+IN SCOPE
+  - UI authentication, navigation, and domain workflows (Deal Book, Countries,
+    Institutions, Portfolio, Screenings, Monitoring, Company, Tenders, Settings)
+  - API health, auth, portfolio, entities, countries, search, deals, screenings,
+    company/ownership, monitoring, tenders, alerts, and document downloads
+  - Security probes: SQLi, XSS, security headers, authz/malformed credentials,
+    CSRF/session hardening
+
+OUT OF SCOPE
+  - MCP / Connected assistants
+  - Manual exploratory testing
+  - Performance / load testing
+  - Visual regression baselines
+
+
+3. TEST ENVIRONMENT & PREREQUISITES
+-----------------------------------
+Config (YAML, loaded by scripts/load-config):
+  - config/default.yaml          env=local, suite=all, type=all, chromium,
+                                 timeoutMs=30000, workers=2
+  - config/env/local.yaml        headed=false, workers=2
+  - config/env/ci.yaml           headed=false, workers=2, retries=1
+  - config/suites.yaml           tag filters for smoke / regression / ui / api /
+                                 security
+
+Environment variables (typically via .env):
+  - STONEWAKE_APP_URL            UI base URL
+  - STONEWAKE_API_URL            API base URL
+  - STONEWAKE_EMAIL              Login email
+  - STONEWAKE_PASSWORD           Login password
+  - API key in .env              Bearer auth for API tests; must allow report/pack
+                                 downloads
+
+Account requirements:
+  - Analyst with Deal Book rights (tender dismiss / add-to-deal-book)
+  - Admin rights (Settings API keys + audit log CSV export)
+
+Browsers (UI projects):
+  - Default: Chromium (Desktop Chrome)
+  - Configurable via run config: firefox, webkit
+
+
+4. HOW TESTS ARE RUN
+--------------------
+npm scripts (all route through scripts/run-tests.js):
+
+  npm test                 Default run (UI + API; security excluded)
+  npm run test:ui          UI only
+  npm run test:api         API only
+  npm run test:security    Security suite only (--type security --suite security)
+  npm run test:smoke       @smoke tagged tests (UI + API)
+  npm run test:regression  @smoke + @regression (UI + API)
+  npm run test:ui:smoke    UI smoke
+  npm run test:api:smoke   API smoke
+  npm run test:headed      Headed browser
+  npm run test:debug       Debug mode
+  npm run test:ui:headed   UI headed
+  npm run test:ci          CI profile (--env ci --type all)
+  npm run report           Open HTML report
+
+Playwright projects (playwright.config.ts):
+  - ui-<browser>           testMatch: ui/*.spec.ts
+  - api                    testMatch: api/*.spec.ts
+  - security-api           testMatch: security/*.api.spec.ts
+  - security-ui            testMatch: security/*.ui.spec.ts
+
+NOTE: Security projects are NOT included in npm test, test:ci, smoke, or
+regression. Run them explicitly with npm run test:security.
+
+
+5. TAGGING CONVENTION
+---------------------
+  @ui          UI browser tests
+  @api         API request tests
+  @security    Security suite
+  @smoke       Critical path / smoke
+  @regression  Broader functional coverage
+
+Suite tag filters (config/suites.yaml):
+  all         no tag filter
+  smoke       @smoke
+  regression  @smoke + @regression
+  ui          @ui
+  api         @api
+  security    @security
+
+
+6. TEST LAYOUT
+--------------
+tests/
+  ui/          Domain UI specs
+  api/         Domain API specs
+  security/    Opt-in security suite
+
+src/
+  constants/   env, routes, messages, test data, security payloads
+  clients/     ApiClient
+  pages/       Page objects
+  fixtures/    Playwright test.extend
+  security/    Shared security assertions
+
+
+================================================================================
+7. UI TEST CASES
+================================================================================
+Total: 21 tests | Tags: @ui + (@smoke | @regression)
+Project: ui-chromium (and other configured browsers)
+
+--------------------------------------------------------------------------------
+TC-UI-01 | ui 1 login ok
+File:    tests/ui/auth.spec.ts
+Tags:    @ui @smoke
+Objective:
+  Verify successful login with valid credentials after accepting terms.
+Steps:
+  1. Open home and expect login page / sign-in title.
+  2. Fill email and password; accept terms; submit.
+  3. Wait for home/Deal Book.
+Expected:
+  - Redirect to home; Deal Book heading visible.
+  - Sidebar shows team copy; Deals, Portfolio, Countries modules visible.
+  - Sign out control visible.
+
+--------------------------------------------------------------------------------
+TC-UI-02 | ui 2 wrong password
+File:    tests/ui/auth.spec.ts
+Tags:    @ui @smoke
+Objective:
+  Verify failed login with wrong password stays on login and shows error.
+Steps:
+  1. Open login; fill valid email and wrong password; accept terms; submit.
+Expected:
+  - Error message visible; URL remains login; no sidebar.
+
+--------------------------------------------------------------------------------
+TC-UI-03 | ui 3 terms checkbox
+File:    tests/ui/auth.spec.ts
+Tags:    @ui @regression
+Objective:
+  Verify submit stays disabled until terms are accepted.
+Steps:
+  1. Open login; assert submit disabled.
+  2. Fill credentials; assert still disabled.
+  3. Check terms; assert enabled; uncheck; assert disabled.
+Expected:
+  - Submit toggles with terms checkbox; terms link href correct.
+
+--------------------------------------------------------------------------------
+TC-UI-04 | ui 4 not logged in redirect
+File:    tests/ui/auth.spec.ts
+Tags:    @ui @regression
+Objective:
+  Verify unauthenticated access to protected routes redirects to login.
+Steps:
+  1. Visit home, portfolio, country(DEU), entities without session.
+Expected:
+  - Each path redirects to login; login heading visible; no sidebar.
+
+--------------------------------------------------------------------------------
+TC-UI-05 | ui 5 logout
+File:    tests/ui/auth.spec.ts
+Tags:    @ui @regression
+Objective:
+  Verify logout clears session and blocks protected navigation.
+Steps:
+  1. Sign in; confirm Deal Book.
+  2. Sign out; confirm login heading.
+  3. Navigate to portfolio.
+Expected:
+  - Redirected to login after logout and after protected navigation.
+
+--------------------------------------------------------------------------------
+TC-UI-06 | ui 6 sidebar
+File:    tests/ui/navigation.spec.ts
+Tags:    @ui @regression
+Objective:
+  Verify sidebar/module navigation reaches correct pages and headings.
+Steps:
+  1. Navigate Countries, Tenders, Entities, Portfolio.
+  2. Navigate Monitoring, Screenings, Scoring.
+  3. Open Settings via workspace name.
+Expected:
+  - Each destination URL and heading match the module.
+
+--------------------------------------------------------------------------------
+TC-UI-07 | ui 7 deal book search
+File:    tests/ui/deals.spec.ts
+Tags:    @ui @regression
+Objective:
+  Verify Deal Book list, empty search, and deal detail briefing.
+Steps:
+  1. Confirm sector select and Deals tab.
+  2. Capture first deal href; search with no-match query.
+  3. Clear search; open deal.
+Expected:
+  - No-matches state for empty search; deal briefing visible on detail.
+
+--------------------------------------------------------------------------------
+TC-UI-08 | ui 8 countries
+File:    tests/ui/countries.spec.ts
+Tags:    @ui @regression
+Objective:
+  Verify countries search, detail risk/sources, empty search, invalid ISO.
+Steps:
+  1. Open countries; search known country; open detail.
+  2. Search with no-match query.
+  3. Open invalid ISO3 country URL.
+Expected:
+  - Detail shows risk and data sources; no matches for empty search;
+    invalid ISO shows not-found title.
+
+--------------------------------------------------------------------------------
+TC-UI-09 | ui 9 institutions
+File:    tests/ui/institutions.spec.ts
+Tags:    @ui @regression
+Objective:
+  Verify institutions list filters and entity open.
+Steps:
+  1. Open institutions; confirm kind/country controls.
+  2. Search known institution; open entity.
+Expected:
+  - Single matching entity link; entity page title/heading visible.
+
+--------------------------------------------------------------------------------
+TC-UI-10 | ui 10 portfolio
+File:    tests/ui/portfolio.spec.ts
+Tags:    @ui @regression
+Objective:
+  Verify portfolio status tiles and opening first entity.
+Steps:
+  1. Open portfolio; assert Red/Amber/Green/Insufficient/Not assessed tiles.
+  2. Open first entity.
+Expected:
+  - Entity page h1 matches selected display name.
+
+--------------------------------------------------------------------------------
+TC-UI-11 | ui 11 screenings empty state
+File:    tests/ui/screenings.spec.ts
+Tags:    @ui @regression
+Objective:
+  Verify screenings page empty state and new-screening affordance.
+Steps:
+  1. Open screenings.
+Expected:
+  - Heading, New Screening control, and "nothing screened yet" empty copy.
+
+--------------------------------------------------------------------------------
+TC-UI-12 | ui 12 monitoring entry points
+File:    tests/ui/monitoring.spec.ts
+Tags:    @ui @regression
+Objective:
+  Verify monitoring page and portfolio link navigation.
+Steps:
+  1. Open monitoring; confirm Monitor a name and portfolio link.
+  2. Click portfolio link.
+Expected:
+  - Lands on portfolio with correct heading.
+
+--------------------------------------------------------------------------------
+TC-UI-13 | ui 13 company profile financing ownership
+File:    tests/ui/company.spec.ts
+Tags:    @ui @regression
+Objective:
+  Verify company profile shows financing, ownership, and country context.
+Steps:
+  1. Open known company node.
+Expected:
+  - Company name heading; financing and ownership chain visible; country shown.
+
+--------------------------------------------------------------------------------
+TC-UI-14 | ui 14 deal book filter sources export
+File:    tests/ui/deals.spec.ts
+Tags:    @ui @regression
+Objective:
+  Verify sector filter, deal sources, and PDF report download.
+Steps:
+  1. Open Deal Book; filter by sector; open filtered deal.
+  2. Assert briefing, source links, download report; download PDF.
+Expected:
+  - Filtered deal matches sector; PDF download suggested filename ends .pdf.
+
+--------------------------------------------------------------------------------
+TC-UI-15 | ui 15 tenders dismiss and add to deal book
+File:    tests/ui/tenders.spec.ts
+Tags:    @ui @regression
+Objective:
+  Verify tender match dismiss and add-to-deal-book workflows.
+Steps:
+  1. Open tenders; filter New; open Why on first match.
+  2. Dismiss first match; confirm under Dismissed.
+  3. Add second match to Deal Book; confirm under In Deal Book.
+Expected:
+  - Dismissed title appears in dismissed filter; added match shows Open deal
+    and no longer shows take control.
+
+--------------------------------------------------------------------------------
+TC-UI-16 | ui 16 settings alerts keys audit members
+File:    tests/ui/settings.spec.ts
+Tags:    @ui @regression
+Objective:
+  Verify Settings members, email alerts toggle, API key lifecycle, audit CSV.
+Steps:
+  1. Open settings; assert members and email alerts cards.
+  2. Toggle email alerts on then restore prior state.
+  3. Create then revoke an API key.
+  4. Download audit CSV.
+Expected:
+  - Key row created then marked revoked; audit download ends .csv.
+
+--------------------------------------------------------------------------------
+TC-UI-17 | ui 17 monitoring frequency pause resume
+File:    tests/ui/monitoring.spec.ts
+Tags:    @ui @regression
+Objective:
+  Verify add monitoring target, set frequency, pause/resume, remove.
+Steps:
+  1. Add name target; assert active.
+  2. Set frequency Weekly; pause; resume; remove target.
+Expected:
+  - Frequency value 604800; active switch toggles; empty state after remove.
+
+--------------------------------------------------------------------------------
+TC-UI-18 | ui 18 portfolio status changes
+File:    tests/ui/portfolio.spec.ts
+Tags:    @ui @regression
+Objective:
+  Verify status-changes feed and acknowledge behavior.
+Steps:
+  1. Open portfolio; assert transitions feed and Acknowledge all.
+  2. If pending acknowledgements exist, acknowledge first.
+Expected:
+  - Pending count decreases by one when an item is acknowledged.
+
+--------------------------------------------------------------------------------
+TC-UI-19 | ui 19 deal book excel and deck export
+File:    tests/ui/deals.spec.ts
+Tags:    @ui @regression
+Objective:
+  Verify Deal Book workbook export and deal deck PPTX download.
+Steps:
+  1. Export workbook from Deal Book.
+  2. Open first deal; download deck.
+Expected:
+  - Workbook .xlsx; deck .pptx.
+
+--------------------------------------------------------------------------------
+TC-UI-20 | ui 20 countries excel and report export
+File:    tests/ui/countries.spec.ts
+Tags:    @ui @regression
+Objective:
+  Verify countries workbook export and country PDF report download.
+Steps:
+  1. Export countries workbook.
+  2. Open known country; download report.
+Expected:
+  - Workbook .xlsx; report .pdf.
+
+--------------------------------------------------------------------------------
+TC-UI-21 | ui 21 company profile and deck export
+File:    tests/ui/company.spec.ts
+Tags:    @ui @regression
+Objective:
+  Verify company profile PDF and risk deck PPTX downloads.
+Steps:
+  1. Open company; download profile and risk deck.
+Expected:
+  - Profile .pdf; deck .pptx.
+
+
+================================================================================
+8. API TEST CASES
+================================================================================
+Total: 18 tests | Tags: @api + (@smoke | @regression)
+Project: api
+
+--------------------------------------------------------------------------------
+TC-API-01 | api 1 health
+File:    tests/api/health.spec.ts
+Tags:    @api @smoke
+Objective:
+  Verify health endpoint returns ok payload shape.
+Expected:
+  - HTTP 200; keys app/environment/status/version; status=ok; app=stonewake.
+
+--------------------------------------------------------------------------------
+TC-API-02 | api 2 me
+File:    tests/api/auth.spec.ts
+Tags:    @api @smoke
+Objective:
+  Verify authenticated /me with API key and rate-limit headers.
+Expected:
+  - HTTP 200; credential=api_key; role and team_scope shape valid;
+    X-RateLimit-Limit/Remaining numeric headers present.
+
+--------------------------------------------------------------------------------
+TC-API-03 | api 3 no token
+File:    tests/api/auth.spec.ts
+Tags:    @api @smoke
+Objective:
+  Verify unauthenticated calls return 401 unauthenticated error.
+Endpoints covered:
+  me, portfolio, countries, entities, citationsResolve
+Expected:
+  - Each returns 401 with standard unauthenticated body.
+
+--------------------------------------------------------------------------------
+TC-API-04 | api 4 bad keys
+File:    tests/api/auth.spec.ts
+Tags:    @api @regression
+Objective:
+  Verify invalid/malformed credentials are rejected.
+Cases:
+  invalid API key bearer, non-key bearer, Basic auth, invalid portfolio bearer
+Expected:
+  - All return 401 unauthenticated.
+
+--------------------------------------------------------------------------------
+TC-API-05 | api 5 portfolio list
+File:    tests/api/portfolio.spec.ts
+Tags:    @api @regression
+Objective:
+  Verify portfolio list pagination, item shape, and limit validation.
+Expected:
+  - items/limit/offset/total correct; status in allowed set; completeness 0..1;
+    limit -1/'abc'/100000 -> 422 (max 100).
+
+--------------------------------------------------------------------------------
+TC-API-06 | api 6 portfolio summary
+File:    tests/api/portfolio.spec.ts
+Tags:    @api @regression
+Objective:
+  Verify portfolio summary status buckets and totals consistency.
+Expected:
+  - statuses keys match summaryStatusKeys; counts sum to active_exposures;
+    portfolio total equals active_exposures.
+
+--------------------------------------------------------------------------------
+TC-API-07 | api 7 entities
+File:    tests/api/entities.spec.ts
+Tags:    @api @regression
+Objective:
+  Verify entities list and fetch-by-id round trip.
+Expected:
+  - List items have id/slug/display_name/kind; GET by id equals list item.
+
+--------------------------------------------------------------------------------
+TC-API-08 | api 8 entity not found
+File:    tests/api/entities.spec.ts
+Tags:    @api @regression
+Objective:
+  Verify missing/invalid entity and unauthenticated entity access.
+Expected:
+  - Missing id 404; non-int id 422 validation_failed; node missing 404;
+    unauthenticated entity 401.
+
+--------------------------------------------------------------------------------
+TC-API-09 | api 9 countries
+File:    tests/api/countries.spec.ts
+Tags:    @api @regression
+Objective:
+  Verify countries catalog and known country detail risk score.
+Expected:
+  - >=100 countries; ISO3 pattern; known country detail matches fixtures;
+    risk score 0..100; invalid ISO 404.
+
+--------------------------------------------------------------------------------
+TC-API-10 | api 10 search
+File:    tests/api/search.spec.ts
+Tags:    @api @regression
+Objective:
+  Verify search hits, empty results, and query/limit validation.
+Expected:
+  - Hits limited and scored 0..1; empty query hits []; missing q / too short /
+    limit>25 -> 422.
+
+--------------------------------------------------------------------------------
+TC-API-11 | api 11 deals list and filter
+File:    tests/api/deals.spec.ts
+Tags:    @api @regression
+Objective:
+  Verify deals list, sector/country filters, no-hits, validation, auth.
+Expected:
+  - Filtered deals match sector and country; no-hits empty; invalid country 422;
+    unauthenticated 401.
+
+--------------------------------------------------------------------------------
+TC-API-12 | api 12 deal detail sources and export
+File:    tests/api/deals.spec.ts
+Tags:    @api @regression
+Objective:
+  Verify deal detail shape, sources, and PDF report binary.
+Expected:
+  - summary_lines and sources present; PDF content-type and size >1000;
+    missing deal 404.
+
+--------------------------------------------------------------------------------
+TC-API-13 | api 13 screenings list
+File:    tests/api/screenings.spec.ts
+Tags:    @api @regression
+Objective:
+  Verify screenings list/detail, auth, and missing screening.
+Expected:
+  - List pagination; detail has sources or findings when items exist;
+    unauthenticated 401; missing 404.
+
+--------------------------------------------------------------------------------
+TC-API-14 | api 14 company profile financing ownership
+File:    tests/api/company.spec.ts
+Tags:    @api @regression
+Objective:
+  Verify company node, financing instruments, and ownership chain.
+Expected:
+  - Identity/financing/ownership payloads keyed to node; instruments and
+    ownership arrays present; max_depth param echoed.
+
+--------------------------------------------------------------------------------
+TC-API-15 | api 15 monitoring targets and portfolio updates
+File:    tests/api/monitoring.spec.ts
+Tags:    @api @regression
+Objective:
+  Verify monitoring targets and portfolio transitions list shapes.
+Expected:
+  - Targets and transitions paginated; transition statuses valid;
+    unauthenticated calls 401.
+
+--------------------------------------------------------------------------------
+TC-API-16 | api 16 tender profiles and matches
+File:    tests/api/tenders.spec.ts
+Tags:    @api @regression
+Objective:
+  Verify tender profiles, new matches, match detail, auth/404.
+Expected:
+  - Profiles/matches item shapes; match detail by id; missing 404;
+    unauthenticated 401.
+
+--------------------------------------------------------------------------------
+TC-API-17 | api 17 alert events and channels
+File:    tests/api/alerts.spec.ts
+Tags:    @api @regression
+Objective:
+  Verify alert events list/filter and channel configuration.
+Expected:
+  - Events have severity/class/timestamps; severity=info filter works;
+    channels from allowed set; unauthenticated 401.
+
+--------------------------------------------------------------------------------
+TC-API-18 | api 18 document downloads
+File:    tests/api/documents.spec.ts
+Tags:    @api @regression
+Objective:
+  Verify PDF/PPTX document endpoints for deals, entities, and company nodes.
+Expected:
+  - Deal pack PDF and deck PPTX OK with correct content-types/size;
+    entity report PDF OK; entity pack and risk deck accept 200 or 404;
+    company profile PDF OK; missing resources 404; unauthenticated deck 401.
+
+
+================================================================================
+9. SECURITY TEST CASES (OPT-IN)
+================================================================================
+Total: 15 tests | Tags: @security + (@api | @ui)
+Projects: security-api, security-ui
+Run with: npm run test:security
+
+--------------------------------------------------------------------------------
+TC-SEC-01 | security 1 sqli search q
+File:    tests/security/sqli.api.spec.ts
+Tags:    @security @api
+Objective:
+  Probe search q parameter with SQL injection payloads.
+Expected:
+  - Responses classified safe (no 5xx/leakage per assertSafeApiResponse).
+
+--------------------------------------------------------------------------------
+TC-SEC-02 | security 2 sqli deals q and filters
+File:    tests/security/sqli.api.spec.ts
+Tags:    @security @api
+Objective:
+  Probe deals q, sector, and country_code with SQLi payloads.
+Expected:
+  - Safe API responses for all payloads.
+
+--------------------------------------------------------------------------------
+TC-SEC-03 | security 3 sqli path ids and numeric params
+File:    tests/security/sqli.api.spec.ts
+Tags:    @security @api
+Objective:
+  Probe path IDs (entity/node/deal/screening/country) and numeric params
+  (portfolio limit, ownership max_depth) with traversal/SQLi payloads.
+Expected:
+  - Safe responses; authenticated /me still returns 200 after probes.
+
+--------------------------------------------------------------------------------
+TC-SEC-04 | security 4 xss api search reflection
+File:    tests/security/xss.api.spec.ts
+Tags:    @security @api
+Objective:
+  Verify XSS payloads in search remain JSON and are not executed as HTML.
+Expected:
+  - Safe response; content-type application/json; query echoed as data.
+
+--------------------------------------------------------------------------------
+TC-SEC-05 | security 5 xss api deals reflection
+File:    tests/security/xss.api.spec.ts
+Tags:    @security @api
+Objective:
+  Verify XSS payloads in deals search return JSON, not HTML.
+Expected:
+  - Safe response; content-type JSON (not text/html).
+
+--------------------------------------------------------------------------------
+TC-SEC-06 | security 6 headers api health
+File:    tests/security/headers.api.spec.ts
+Tags:    @security @api
+Objective:
+  Verify hardening headers on API health response.
+Expected:
+  - assertHardeningHeaders passes on health headers.
+
+--------------------------------------------------------------------------------
+TC-SEC-07 | security 7 authz path traversal ids
+File:    tests/security/authz.api.spec.ts
+Tags:    @security @api
+Objective:
+  Verify path-traversal IDs on entity/node/company/deal/report/screening
+  are rejected safely.
+Expected:
+  - Safe response; status in {400, 404, 422}.
+
+--------------------------------------------------------------------------------
+TC-SEC-08 | security 8 authz malformed credentials
+File:    tests/security/authz.api.spec.ts
+Tags:    @security @api
+Objective:
+  Verify empty/invalid/malformed Authorization schemes are rejected.
+Expected:
+  - All cases HTTP 401 with unauthenticated error body.
+
+--------------------------------------------------------------------------------
+TC-SEC-09 | security 9 xss ui deal search
+File:    tests/security/xss.ui.spec.ts
+Tags:    @security @ui
+Objective:
+  Verify Deal Book search does not execute XSS payloads.
+Expected:
+  - Input retains payload text; no dialog/execution; heading remains visible.
+
+--------------------------------------------------------------------------------
+TC-SEC-10 | security 10 xss ui country search
+File:    tests/security/xss.ui.spec.ts
+Tags:    @security @ui
+Objective:
+  Verify Countries search does not execute XSS payloads.
+Expected:
+  - Same non-execution guarantees as TC-SEC-09.
+
+--------------------------------------------------------------------------------
+TC-SEC-11 | security 11 xss ui institution search
+File:    tests/security/xss.ui.spec.ts
+Tags:    @security @ui
+Objective:
+  Verify Institutions search does not execute XSS payloads.
+Expected:
+  - Same non-execution guarantees as TC-SEC-09.
+
+--------------------------------------------------------------------------------
+TC-SEC-12 | security 12 csrf session cookies hardened
+File:    tests/security/csrf.ui.spec.ts
+Tags:    @security @ui
+Objective:
+  Verify post-login session/auth cookies have secure attributes.
+Expected:
+  - At least one session-like cookie; HttpOnly implies Secure; SameSite valid
+    (None requires Secure).
+
+--------------------------------------------------------------------------------
+TC-SEC-13 | security 13 csrf api rejects cookie-only auth
+File:    tests/security/csrf.ui.spec.ts
+Tags:    @security @ui
+Objective:
+  Verify browser session cookies alone cannot authenticate API calls.
+Expected:
+  - /me and /portfolio with Cookie header only return 401 unauthenticated.
+
+--------------------------------------------------------------------------------
+TC-SEC-14 | security 14 csrf forged origin does not unlock api
+File:    tests/security/csrf.ui.spec.ts
+Tags:    @security @ui
+Objective:
+  Verify forged Origin/Referer plus cookies still cannot call API as user.
+Expected:
+  - /me returns 401 unauthenticated.
+
+--------------------------------------------------------------------------------
+TC-SEC-15 | security 15 headers ui login
+File:    tests/security/headers.ui.spec.ts
+Tags:    @security @ui
+Objective:
+  Verify login page sends hardening headers including CSP frame-ancestors.
+Expected:
+  - Response OK; hardening headers present; CSP includes frame-ancestors.
+
+
+================================================================================
+10. TRACEABILITY SUMMARY
+================================================================================
+Suite            Count   Default in npm test / CI?
+---------------  ------  -------------------------
+UI               21      Yes (when type includes ui)
+API              18      Yes (when type includes api)
+Security         15      No  (npm run test:security only)
+---------------  ------  -------------------------
+TOTAL            54
+
+Smoke (@smoke):
+  UI:  ui 1, ui 2
+  API: api 1, api 2, api 3
+
+Regression (@regression):
+  All remaining UI and API tests (ui 3–21, api 4–18)
+
+Security:
+  security 1–15 (opt-in)
+
+
+================================================================================
+11. PASS / FAIL CRITERIA
+================================================================================
+PASS
+  - All selected suite tests exit 0 under Playwright.
+  - Assertions in each TC above are satisfied.
+  - No unexpected 5xx or credential leakage in security assert helpers.
+
+FAIL
+  - Any assertion failure, timeout, or uncaught error in selected projects.
+  - CI run (npm run test:ci) fails after configured retries (ci.yaml retries=1).
+
+
+12. REPORTING & ARTIFACTS
+-------------------------
+  - Console: list reporter
+  - HTML report: playwright-report/ (npm run report)
+  - Traces: retain-on-failure
+  - Screenshots: only-on-failure
+
+
+13. ASSUMPTIONS & RISKS
+-----------------------
+  - Seeded / live environment data must include fixtures used by constants
+    (country, company, institution, monitoring target, deal filters, etc.).
+  - Tender and Settings UI tests mutate workspace state (dismiss/add match,
+    create/revoke API key); account must have required roles.
+  - Some document endpoints accept 200 or 404 where product may not yet expose
+    every pack/deck for every entity.
+  - Security suite is intentionally opt-in and may be noisy against rate limits
+    or WAF behavior depending on environment.
+
+
+================================================================================
+END OF STP
+================================================================================
