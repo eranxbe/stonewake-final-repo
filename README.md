@@ -19,6 +19,10 @@ tests/
 
 Import `{ test, expect }` from `src/fixtures/test` in new specs. Tag with `@ui`/`@api` plus `@smoke`/`@regression`.
 
+## Account requirements
+
+`STONEWAKE_EMAIL` / `STONEWAKE_PASSWORD` should be an **analyst with Deal Book** (tender dismiss / add-to-deal-book) and an **admin** (Settings API keys + audit log CSV). The API key in `.env` must be allowed to download reports and packs.
+
 ## Security suite
 
 Black-box probes for SQL injection, XSS, CSRF/session hardening, security headers, and malformed auth. Tagged `@security`.

@@ -43,3 +43,19 @@ test('ui 14 deal book filter sources export', { tag: ['@ui', '@regression'] }, a
   const download = await dealBookPage.downloadDealReport();
   expect(download.suggestedFilename()).toMatch(/\.pdf$/i);
 });
+
+test('ui 19 deal book excel and deck export', { tag: ['@ui', '@regression'] }, async ({
+  loggedInPage,
+  dealBookPage,
+}) => {
+  await dealBookPage.open();
+  const workbook = await dealBookPage.exportWorkbook();
+  expect(workbook.suggestedFilename()).toMatch(/\.xlsx$/i);
+
+  const dealHref = await dealBookPage.firstDeal().getAttribute('href');
+  expect(dealHref).toBeTruthy();
+  await dealBookPage.openDeal(dealHref!);
+  await expect(dealBookPage.downloadDeck).toBeVisible();
+  const deck = await dealBookPage.downloadDealDeck();
+  expect(deck.suggestedFilename()).toMatch(/\.pptx$/i);
+});

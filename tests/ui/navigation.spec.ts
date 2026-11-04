@@ -1,4 +1,5 @@
 import { test, expect } from '../../src/fixtures/test';
+import { workspaceName } from '../../src/constants/data';
 import { headings } from '../../src/constants/messages';
 import { routes } from '../../src/constants/routes';
 
@@ -6,6 +7,10 @@ test('ui 6 sidebar', { tag: ['@ui', '@regression'] }, async ({ loggedInPage, app
   await appShell.goToModule('countries');
   await loggedInPage.waitForURL(`**${routes.countries}`);
   await expect(appShell.heading).toHaveText(headings.countries);
+
+  await appShell.goToModule('tenders');
+  await loggedInPage.waitForURL(`**${routes.tenders}`);
+  await expect(appShell.heading).toHaveText(headings.tenders);
 
   await appShell.goToModule('entities');
   await loggedInPage.waitForURL(`**${routes.entities}`);
@@ -23,4 +28,7 @@ test('ui 6 sidebar', { tag: ['@ui', '@regression'] }, async ({ loggedInPage, app
 
   await appShell.goToNav(headings.scoring, `**${routes.scoring}`);
   await expect(appShell.heading).toHaveText(headings.scoring);
+
+  await appShell.openSettings(workspaceName);
+  await expect(appShell.heading).toHaveText(headings.settings);
 });

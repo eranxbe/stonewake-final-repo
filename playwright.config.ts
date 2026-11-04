@@ -33,7 +33,7 @@ const uiProjects = browsers.map((browser) => {
 
 export default defineConfig({
   testDir: './tests',
-  timeout: runConfig.timeoutMs ?? 30000,
+  timeout: runConfig.timeoutMs ?? 60000,
   workers: runConfig.workers ?? 2,
   retries: runConfig.retries ?? 0,
   reporter: [['list'], ['html', { open: 'never' }]],

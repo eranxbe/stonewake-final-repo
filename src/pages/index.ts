@@ -7,3 +7,5 @@ export { PortfolioPage } from './portfolio.page';
 export { CompanyPage } from './company.page';
 export { ScreeningsPage } from './screenings.page';
 export { MonitoringPage } from './monitoring.page';
+export { TendersPage } from './tenders.page';
+export { SettingsPage } from './settings.page';

@@ -84,6 +84,30 @@ export class ApiClient {
     return this.get(apiRoutes.dealReportPdf(id), { auth });
   }
 
+  dealPackPdf(id: string, auth?: AuthMode): Promise<APIResponse> {
+    return this.get(apiRoutes.dealPackPdf(id), { auth });
+  }
+
+  dealDeckPptx(id: string, auth?: AuthMode): Promise<APIResponse> {
+    return this.get(apiRoutes.dealDeckPptx(id), { auth });
+  }
+
+  entityReportPdf(id: string | number, auth?: AuthMode): Promise<APIResponse> {
+    return this.get(apiRoutes.entityReportPdf(id), { auth });
+  }
+
+  entityPackPdf(id: string | number, auth?: AuthMode): Promise<APIResponse> {
+    return this.get(apiRoutes.entityPackPdf(id), { auth });
+  }
+
+  nodeProfilePdf(id: string | number, auth?: AuthMode): Promise<APIResponse> {
+    return this.get(apiRoutes.nodeProfilePdf(id), { auth });
+  }
+
+  nodeRiskDeckPptx(id: string | number, auth?: AuthMode): Promise<APIResponse> {
+    return this.get(apiRoutes.nodeRiskDeckPptx(id), { auth });
+  }
+
   screenings(params?: Record<string, string | number | undefined>, auth?: AuthMode): Promise<APIResponse> {
     return this.get(apiRoutes.screenings, { params, auth });
   }
@@ -94,6 +118,26 @@ export class ApiClient {
 
   monitoringTargets(params?: Record<string, string | number | undefined>, auth?: AuthMode): Promise<APIResponse> {
     return this.get(apiRoutes.monitoringTargets, { params, auth });
+  }
+
+  tenderProfiles(params?: Record<string, string | number | undefined>, auth?: AuthMode): Promise<APIResponse> {
+    return this.get(apiRoutes.tenderProfiles, { params, auth });
+  }
+
+  tenderMatches(params?: Record<string, string | number | undefined>, auth?: AuthMode): Promise<APIResponse> {
+    return this.get(apiRoutes.tenderMatches, { params, auth });
+  }
+
+  tenderMatch(id: string | number, auth?: AuthMode): Promise<APIResponse> {
+    return this.get(apiRoutes.tenderMatch(id), { auth });
+  }
+
+  alertEvents(params?: Record<string, string | number | undefined>, auth?: AuthMode): Promise<APIResponse> {
+    return this.get(apiRoutes.alertEvents, { params, auth });
+  }
+
+  alertChannels(auth?: AuthMode): Promise<APIResponse> {
+    return this.get(apiRoutes.alertChannels, { auth });
   }
 
   citationsResolve(auth?: AuthMode): Promise<APIResponse> {

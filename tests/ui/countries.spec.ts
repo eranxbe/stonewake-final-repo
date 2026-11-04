@@ -25,3 +25,18 @@ test('ui 8 countries', { tag: ['@ui', '@regression'] }, async ({
   await countryDetailPage.open(country.invalidIso3);
   await expect(loggedInPage).toHaveTitle(titles.notFound);
 });
+
+test('ui 20 countries excel and report export', { tag: ['@ui', '@regression'] }, async ({
+  loggedInPage,
+  countriesPage,
+  countryDetailPage,
+}) => {
+  await countriesPage.open();
+  const workbook = await countriesPage.exportWorkbook();
+  expect(workbook.suggestedFilename()).toMatch(/\.xlsx$/i);
+
+  await countryDetailPage.open(country.iso3);
+  await expect(countryDetailPage.downloadReport).toBeVisible();
+  const report = await countryDetailPage.downloadCountryReport();
+  expect(report.suggestedFilename()).toMatch(/\.pdf$/i);
+});

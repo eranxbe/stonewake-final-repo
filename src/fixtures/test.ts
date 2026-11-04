@@ -9,6 +9,8 @@ import { PortfolioPage } from '../pages/portfolio.page';
 import { CompanyPage } from '../pages/company.page';
 import { ScreeningsPage } from '../pages/screenings.page';
 import { MonitoringPage } from '../pages/monitoring.page';
+import { TendersPage } from '../pages/tenders.page';
+import { SettingsPage } from '../pages/settings.page';
 
 type Fixtures = {
   api: ApiClient;
@@ -22,6 +24,8 @@ type Fixtures = {
   companyPage: CompanyPage;
   screeningsPage: ScreeningsPage;
   monitoringPage: MonitoringPage;
+  tendersPage: TendersPage;
+  settingsPage: SettingsPage;
   loggedInPage: Page;
 };
 
@@ -68,6 +72,14 @@ export const test = base.extend<Fixtures>({
 
   monitoringPage: async ({ page }, use) => {
     await use(new MonitoringPage(page));
+  },
+
+  tendersPage: async ({ page }, use) => {
+    await use(new TendersPage(page));
+  },
+
+  settingsPage: async ({ page }, use) => {
+    await use(new SettingsPage(page));
   },
 
   loggedInPage: async ({ page, loginPage }, use) => {

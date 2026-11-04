@@ -56,3 +56,19 @@ export const summaryStatusKeys = [
   'red',
   'sole_trader',
 ] as const;
+
+export const tenderMatchStatuses = ['new', 'dismissed', 'in_deal_book'] as const;
+
+export const alertSeverities = ['critical', 'high', 'info'] as const;
+
+export const alertChannels = ['email', 'sms', 'teams', 'webhook', 'in_app'] as const;
+
+export const workspaceName = 'ITAC 1' as const;
+
+export const monitoringTarget = {
+  query: 'Siemens',
+  suggestion: 'Siemens Aktiengesellschaft',
+  rowName: 'Siemens',
+} as const;
+
+export const institutionEntityId = 4 as const;

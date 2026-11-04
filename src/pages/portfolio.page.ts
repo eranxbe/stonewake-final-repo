@@ -1,4 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
+import { headings } from '../constants/messages';
 import { routes } from '../constants/routes';
 
 export class PortfolioPage {
@@ -9,6 +10,8 @@ export class PortfolioPage {
   readonly tileInsufficient: Locator;
   readonly tileNotAssessed: Locator;
   readonly entityLinks: Locator;
+  readonly transitionsFeed: Locator;
+  readonly acknowledgeAll: Locator;
 
   constructor(private readonly page: Page) {
     this.heading = page.locator('h1');
@@ -18,6 +21,8 @@ export class PortfolioPage {
     this.tileInsufficient = page.locator('[data-testid="tile-insufficient"]');
     this.tileNotAssessed = page.locator('[data-testid="tile-not_assessed"]');
     this.entityLinks = page.locator('tbody a[href^="/entities/n"]');
+    this.transitionsFeed = page.getByTestId('transitions-feed');
+    this.acknowledgeAll = page.getByTestId('ack-all');
   }
 
   async open(): Promise<void> {
@@ -34,5 +39,17 @@ export class PortfolioPage {
     await first.click();
     await this.page.waitForURL(/\/entities\/n\d+/);
     return name;
+  }
+
+  statusChangesHeading(): Locator {
+    return this.transitionsFeed.getByText(headings.statusChanges);
+  }
+
+  acknowledgeButtons(): Locator {
+    return this.transitionsFeed.getByRole('button', { name: 'Acknowledge', exact: true });
+  }
+
+  async acknowledgeFirstChange(): Promise<void> {
+    await this.acknowledgeButtons().first().click();
   }
 }

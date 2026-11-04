@@ -13,6 +13,8 @@ export class DealBookPage {
   readonly briefing: Locator;
   readonly sourceLinks: Locator;
   readonly downloadReport: Locator;
+  readonly downloadDeck: Locator;
+  readonly exportButton: Locator;
   readonly noMatches: Locator;
 
   constructor(private readonly page: Page) {
@@ -26,6 +28,8 @@ export class DealBookPage {
     this.briefing = page.getByRole('heading', { name: 'Briefing', exact: true });
     this.sourceLinks = page.locator('main a[href^="http"]');
     this.downloadReport = page.getByRole('button', { name: copy.downloadReport, exact: true });
+    this.downloadDeck = page.getByRole('button', { name: copy.downloadDeck, exact: true });
+    this.exportButton = page.getByRole('button', { name: copy.export, exact: true });
     this.noMatches = page.getByText('No matching deals');
   }
 
@@ -58,6 +62,22 @@ export class DealBookPage {
     const [download] = await Promise.all([
       this.page.waitForEvent('download'),
       this.downloadReport.click(),
+    ]);
+    return download;
+  }
+
+  async downloadDealDeck(): Promise<Download> {
+    const [download] = await Promise.all([
+      this.page.waitForEvent('download'),
+      this.downloadDeck.click(),
+    ]);
+    return download;
+  }
+
+  async exportWorkbook(): Promise<Download> {
+    const [download] = await Promise.all([
+      this.page.waitForEvent('download'),
+      this.exportButton.click(),
     ]);
     return download;
   }

@@ -54,3 +54,17 @@ this screenshot (I literally added the screenshot from the email) contains a spe
 ```
 please add a security testing suite, containing sql injection, csrf, xss etc
 ```
+
+### reiterating over the glance doc vs what is implemented
+```
+go over the screenshots of the doc, did we cover every area with at least one test?
+```
+and a followup:
+```
+ok, let's create a plan to add the missing part
+```
+
+### implement missing doc-area coverage
+```
+Implement the plan as specified... (deeper flows; skip MCP/Connected assistants)
+```
