@@ -84,10 +84,13 @@ function getProjectNames(config, type) {
   if (selectedType === 'api') {
     return ['api'];
   }
+  if (selectedType === 'security') {
+    return ['security-api', 'security-ui'];
+  }
   if (selectedType === 'all') {
     return [...uiProjects, 'api'];
   }
-  throw new Error(`Unknown type: ${selectedType}. Use ui, api, or all.`);
+  throw new Error(`Unknown type: ${selectedType}. Use ui, api, security, or all.`);
 }
 
 module.exports = {

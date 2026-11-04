@@ -51,5 +51,20 @@ export default defineConfig({
         baseURL: process.env.STONEWAKE_API_URL,
       },
     },
+    {
+      name: 'security-api',
+      testMatch: /security\/.*\.api\.spec\.ts/,
+      use: {
+        baseURL: process.env.STONEWAKE_API_URL,
+      },
+    },
+    {
+      name: 'security-ui',
+      testMatch: /security\/.*\.ui\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: process.env.STONEWAKE_APP_URL,
+      },
+    },
   ],
 });

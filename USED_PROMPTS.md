@@ -49,3 +49,8 @@ go over the tests in this project, and make the variable names more clear
 ```
 this screenshot (I literally added the screenshot from the email) contains a specification/recommendation I received before starting to test the AUT, go over it, determine if I have tests I can add (and add them if needed using our modular infra), tell me which tests are already implemented
 ```
+
+### security testing (Luca asked so nicely)
+```
+please add a security testing suite, containing sql injection, csrf, xss etc
+```

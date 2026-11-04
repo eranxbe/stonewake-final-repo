@@ -7,6 +7,7 @@
     "test": "node scripts/run-tests.js",
     "test:ui": "node scripts/run-tests.js --type ui",
     "test:api": "node scripts/run-tests.js --type api",
+    "test:security": "node scripts/run-tests.js --type security --suite security",
     "test:smoke": "node scripts/run-tests.js --suite smoke",
     "test:regression": "node scripts/run-tests.js --suite regression",
     "test:ui:smoke": "node scripts/run-tests.js --type ui --suite smoke",
