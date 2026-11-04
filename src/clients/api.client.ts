@@ -28,6 +28,10 @@ export class ApiClient {
     return this.get(apiRoutes.portfolioSummary, { auth });
   }
 
+  portfolioTransitions(params?: Record<string, string | number | undefined>, auth?: AuthMode): Promise<APIResponse> {
+    return this.get(apiRoutes.portfolioTransitions, { params, auth });
+  }
+
   entities(params?: Record<string, string | number | undefined>, auth?: AuthMode): Promise<APIResponse> {
     return this.get(apiRoutes.entities, { params, auth });
   }
@@ -40,6 +44,22 @@ export class ApiClient {
     return this.get(apiRoutes.nodes(id), { auth });
   }
 
+  nodeCompany(id: string | number, auth?: AuthMode): Promise<APIResponse> {
+    return this.get(apiRoutes.nodeCompany(id), { auth });
+  }
+
+  nodeFinancing(id: string | number, auth?: AuthMode): Promise<APIResponse> {
+    return this.get(apiRoutes.nodeFinancing(id), { auth });
+  }
+
+  ownershipChain(
+    id: string | number,
+    params?: Record<string, string | number | undefined>,
+    auth?: AuthMode,
+  ): Promise<APIResponse> {
+    return this.get(apiRoutes.nodeOwnership(id), { params, auth });
+  }
+
   countries(auth?: AuthMode): Promise<APIResponse> {
     return this.get(apiRoutes.countries, { auth });
   }
@@ -50,6 +70,30 @@ export class ApiClient {
 
   search(params?: Record<string, string | number | undefined>, auth?: AuthMode): Promise<APIResponse> {
     return this.get(apiRoutes.search, { params, auth });
+  }
+
+  deals(params?: Record<string, string | number | undefined>, auth?: AuthMode): Promise<APIResponse> {
+    return this.get(apiRoutes.deals, { params, auth });
+  }
+
+  deal(id: string, auth?: AuthMode): Promise<APIResponse> {
+    return this.get(apiRoutes.deal(id), { auth });
+  }
+
+  dealReportPdf(id: string, auth?: AuthMode): Promise<APIResponse> {
+    return this.get(apiRoutes.dealReportPdf(id), { auth });
+  }
+
+  screenings(params?: Record<string, string | number | undefined>, auth?: AuthMode): Promise<APIResponse> {
+    return this.get(apiRoutes.screenings, { params, auth });
+  }
+
+  screening(id: string | number, auth?: AuthMode): Promise<APIResponse> {
+    return this.get(apiRoutes.screening(id), { auth });
+  }
+
+  monitoringTargets(params?: Record<string, string | number | undefined>, auth?: AuthMode): Promise<APIResponse> {
+    return this.get(apiRoutes.monitoringTargets, { params, auth });
   }
 
   citationsResolve(auth?: AuthMode): Promise<APIResponse> {

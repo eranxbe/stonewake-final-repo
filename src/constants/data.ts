@@ -27,6 +27,18 @@ export const institution = {
   id: 4,
 } as const;
 
+export const company = {
+  nodeId: 106084,
+  name: 'ROLLS-ROYCE HOLDINGS PLC',
+  countryIso3: 'GBR',
+} as const;
+
+export const dealFilters = {
+  sector: 'energy_power',
+  countryCode: 'USA',
+  invalidCountryCode: 'zzz',
+} as const;
+
 export const portfolioStatuses = [
   'green',
   'amber',

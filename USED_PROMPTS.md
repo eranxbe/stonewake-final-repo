@@ -44,3 +44,8 @@ go over @README.md , separate the prompts I used to USED_PROMPTS.md
 ```
 go over the tests in this project, and make the variable names more clear
 ```
+
+### expanding test suite
+```
+this screenshot (I literally added the screenshot from the email) contains a specification/recommendation I received before starting to test the AUT, go over it, determine if I have tests I can add (and add them if needed using our modular infra), tell me which tests are already implemented
+```

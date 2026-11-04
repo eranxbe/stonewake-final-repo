@@ -1,5 +1,5 @@
 import { test, expect } from '../../src/fixtures/test';
-import { search } from '../../src/constants/data';
+import { dealFilters, search } from '../../src/constants/data';
 import { copy } from '../../src/constants/messages';
 
 test('ui 7 deal book search', { tag: ['@ui', '@regression'] }, async ({ loggedInPage, dealBookPage }) => {
@@ -17,4 +17,29 @@ test('ui 7 deal book search', { tag: ['@ui', '@regression'] }, async ({ loggedIn
   await dealBookPage.clearSearch();
   await dealBookPage.openDeal(dealHref!);
   await expect(dealBookPage.briefing).toBeVisible();
+});
+
+test('ui 14 deal book filter sources export', { tag: ['@ui', '@regression'] }, async ({
+  loggedInPage,
+  dealBookPage,
+}) => {
+  await dealBookPage.open();
+  await expect(dealBookPage.windowSelect).toBeVisible();
+  await expect(dealBookPage.regionSelect).toBeVisible();
+
+  await dealBookPage.filterBySector(dealFilters.sector);
+  const filteredDeal = dealBookPage.firstDeal();
+  await expect(filteredDeal).toBeVisible();
+  await expect(filteredDeal).toContainText(/Energy|power/i);
+
+  const dealHref = await filteredDeal.getAttribute('href');
+  expect(dealHref).toBeTruthy();
+
+  await dealBookPage.openDeal(dealHref!);
+  await expect(dealBookPage.briefing).toBeVisible();
+  await expect(dealBookPage.sourceLinks.first()).toBeVisible();
+  await expect(dealBookPage.downloadReport).toBeVisible();
+
+  const download = await dealBookPage.downloadDealReport();
+  expect(download.suggestedFilename()).toMatch(/\.pdf$/i);
 });
