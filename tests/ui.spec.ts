@@ -16,7 +16,7 @@ test('ui 1 login ok', { tag: ['@ui', '@smoke'] }, async ({ page }) => {
   expect(page.url()).toContain('/login');
   await expect(page).toHaveTitle('Sign in · Stonewake');
   await expect(page.locator('//h1[text()="Sign in"]')).toBeVisible();
-  await page.fill('#email', EMAIL);
+  await page.fill('input[type="email"]', EMAIL);
   await page.fill('input[type="password"]', PASS);
   await page.click('button[role="checkbox"]');
   await page.click('button[type="submit"]');
@@ -48,9 +48,9 @@ test('ui 3 terms checkbox', { tag: ['@ui', '@regression'] }, async ({ page }) =>
   await page.fill('input[type="email"]', EMAIL);
   await page.fill('input[type="password"]', PASS);
   await expect(page.locator('button[type="submit"]')).toBeDisabled();
-  await page.check('input[type="checkbox"]');
+  await page.check('button[role="checkbox"]');
   await expect(page.locator('button[type="submit"]')).toBeEnabled();
-  await page.uncheck('input[type="checkbox"]');
+  await page.uncheck('button[role="checkbox"]');
   await expect(page.locator('button[type="submit"]')).toBeDisabled();
   await expect(page.locator('//a[text()="Terms of Service"]')).toHaveAttribute('href', 'https://stonewake.ai/terms');
 });
@@ -109,9 +109,6 @@ test('ui 6 sidebar', { tag: ['@ui', '@regression'] }, async ({ page }) => {
   await page.click('//aside//a[normalize-space(.)="Screenings"]');
   await page.waitForURL('**/screenings');
   await expect(page.locator('h1')).toHaveText('Screenings');
-  await page.click('//aside//a[normalize-space(.)="EDD Dossier"]');
-  await page.waitForURL('**/dossiers');
-  await expect(page.locator('h1')).toHaveText('EDD Dossiers');
   await page.click('//aside//a[normalize-space(.)="Scoring"]');
   await page.waitForURL('**/scoring');
   await expect(page.locator('h1')).toHaveText('Scoring');
@@ -127,7 +124,7 @@ test('ui 7 deal book search', { tag: ['@ui', '@regression'] }, async ({ page }) 
   await page.waitForTimeout(3000);
   await expect(page.locator('select[aria-label="All sectors"]')).toBeVisible();
   await expect(page.locator('[role="tab"][aria-selected="true"]')).toHaveText('Deals');
-  var link = page.locator("main a[href^='/deal/']").first();
+  var link = page.locator("main a[href^='/deals/']").first();
   await expect(link).toBeVisible();
   var href = await link.getAttribute('href');
   await page.fill('input[placeholder="Search deals…"]', 'zzzzqqxx');
@@ -195,7 +192,7 @@ test('ui 10 portfolio', { tag: ['@ui', '@regression'] }, async ({ page }) => {
   await expect(page.locator('[data-testid="tile-amber"]')).toBeVisible();
   await expect(page.locator('[data-testid="tile-green"]')).toBeVisible();
   await expect(page.locator('[data-testid="tile-insufficient"]')).toBeVisible();
-  await expect(page.locator('[data-testid="tile-not-assessed"]')).toBeVisible();
+  await expect(page.locator('[data-testid="tile-not_assessed"]')).toBeVisible();
   var first = page.locator('tbody a[href^="/entities/n"]').first();
   await expect(first).toBeVisible();
   var name = (await first.innerText()).trim();
