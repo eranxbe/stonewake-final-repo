@@ -1,0 +1,8 @@
+env: local
+suite: all
+type: all
+headed: false
+browsers:
+  - chromium
+timeoutMs: 30000
+workers: 2

@@ -25,7 +25,13 @@ jobs:
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
       - name: Run Playwright tests
-        run: npx playwright test
+        env:
+          STONEWAKE_APP_URL: https://app.stonewake.ai
+          STONEWAKE_API_URL: https://api.stonewake.ai
+          STONEWAKE_EMAIL: ${{ secrets.STONEWAKE_EMAIL }}
+          STONEWAKE_PASSWORD: ${{ secrets.STONEWAKE_PASSWORD }}
+          STONEWAKE_API_KEY: ${{ secrets.STONEWAKE_API_KEY }}
+        run: npm run test:ci
       - name: Upload HTML report
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4

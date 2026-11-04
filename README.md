@@ -1,17 +1,32 @@
-# Stonewake Test Automation
+AI tool: Cursor
 
-This is the test automation project for **Stonewake**, our product. It contains API and UI tests written with [Playwright](https://playwright.dev).
+Prompts used:
+- remove credentials from tests:
+`go over the project, wherever we use EMAIL, PASS, API KEY etc, make sure you read them from .env file`
 
-- **App:** https://app.stonewake.ai
-- **API:** https://api.stonewake.ai
-- **Documentation:** https://docs.stonewake.ai (quickstart, API reference and OpenAPI spec)
+- error reading from env file
+`For the code present, we get this error:
+```
+Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then add 'node' to the types field in your tsconfig.
+```
+Fix it, verify, and then give a concise explanation. 
+`
 
-## Getting started
+- wiring scripts/ directory
+`
+I added a @run-tests.js file, and added some scripts in playwright.config.ts, please adjust @run-tests.js so it fits the scripts and I can run the commands
+`
 
-### Fork this repository
+- mark tests as suites
+`
+add this tagging convention to the existing tests (and their relevant suite respectively
+tag: ['@api', '@regression']
+`
 
-Don't work in this repository directly. First, **fork** it to your own GitHub account and do all your work in your fork.
 
-Not sure what a fork is? Read GitHub's guides:
-- [About forks](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/about-forks)
-- [Fork a repository](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo)
+
+
+todos:
+- make sure pages dont take the baseurl and headers in each test
+- create proper infra
+

@@ -1,0 +1,16 @@
+suites:
+  all:
+    tags: []
+  smoke:
+    tags:
+      - "@smoke"
+  regression:
+    tags:
+      - "@smoke"
+      - "@regression"
+  ui:
+    tags:
+      - "@ui"
+  api:
+    tags:
+      - "@api"

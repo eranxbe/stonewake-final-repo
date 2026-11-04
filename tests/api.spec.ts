@@ -1,9 +1,16 @@
 import { test, expect } from '@playwright/test';
 
-var KEY = 'swk_live_QRReoWVfrAKc91ipjs8WYqNpiCo9HzEWhYxKu5H8';
+function env(name: string): string {
+  var value = process.env[name];
+  if (!value) throw new Error('Missing ' + name + ' in .env');
+  return value;
+}
 
-test('api 1 health', async ({ request }) => {
-  var r = await request.get('https://api.stonewake.ai/v1/health');
+var API = env('STONEWAKE_API_URL');
+var KEY = env('STONEWAKE_API_KEY');
+
+test('api 1 health', { tag: ['@api', '@smoke'] }, async ({ request }) => {
+  var r = await request.get(API + '/v1/health');
   expect(r.status()).toBe(200);
   var b = await r.json();
   expect(Object.keys(b).sort()).toEqual(['app', 'environment', 'status', 'version']);
@@ -13,8 +20,8 @@ test('api 1 health', async ({ request }) => {
   expect(typeof b.environment).toBe('string');
 });
 
-test('api 2 me', async ({ request }) => {
-  var r = await request.get('https://api.stonewake.ai/v1/me', { headers: { Authorization: 'Token ' + KEY } });
+test('api 2 me', { tag: ['@api', '@smoke'] }, async ({ request }) => {
+  var r = await request.get(API + '/v1/me', { headers: { Authorization: 'Token ' + KEY } });
   expect(r.status()).toBe(200);
   var b = await r.json();
   console.log(b);
@@ -34,40 +41,40 @@ test('api 2 me', async ({ request }) => {
   expect(r.headers()['x-ratelimit-remaining']).toMatch(/^\d+$/);
 });
 
-test('api 3 no token', async ({ request }) => {
-  var r = await request.get('https://api.stonewake.ai/v1/me');
+test('api 3 no token', { tag: ['@api', '@smoke'] }, async ({ request }) => {
+  var r = await request.get(API + '/v1/me');
   expect(r.status()).toBe(401);
   expect(await r.json()).toEqual({ error: { code: 'unauthenticated', message: 'Missing or invalid credentials.' } });
-  var r2 = await request.get('https://api.stonewake.ai/v1/portfolio');
+  var r2 = await request.get(API + '/v1/portfolio');
   expect(r2.status()).toBe(401);
   expect(await r2.json()).toEqual({ error: { code: 'unauthenticated', message: 'Missing or invalid credentials.' } });
-  var r3 = await request.get('https://api.stonewake.ai/v1/countries');
+  var r3 = await request.get(API + '/v1/countries');
   expect(r3.status()).toBe(401);
   expect(await r3.json()).toEqual({ error: { code: 'unauthenticated', message: 'Missing or invalid credentials.' } });
-  var r4 = await request.get('https://api.stonewake.ai/v1/entities');
+  var r4 = await request.get(API + '/v1/entities');
   expect(r4.status()).toBe(401);
   expect(await r4.json()).toEqual({ error: { code: 'unauthenticated', message: 'Missing or invalid credentials.' } });
-  var r5 = await request.post('https://api.stonewake.ai/v1/citations/resolve');
+  var r5 = await request.post(API + '/v1/citations/resolve');
   expect(r5.status()).toBe(401);
   expect(await r5.json()).toEqual({ error: { code: 'unauthenticated', message: 'Missing or invalid credentials.' } });
 });
 
-test('api 4 bad keys', async ({ request }) => {
-  var r = await request.get('https://api.stonewake.ai/v1/me', { headers: { Authorization: 'Bearer swk_live_invalid000000000000000000000000' } });
+test('api 4 bad keys', { tag: ['@api', '@regression'] }, async ({ request }) => {
+  var r = await request.get(API + '/v1/me', { headers: { Authorization: 'Bearer swk_live_invalid000000000000000000000000' } });
   expect(r.status()).toBe(401);
   expect(await r.json()).toEqual({ error: { code: 'unauthenticated', message: 'Missing or invalid credentials.' } });
-  var r2 = await request.get('https://api.stonewake.ai/v1/me', { headers: { Authorization: 'Bearer not-a-key' } });
+  var r2 = await request.get(API + '/v1/me', { headers: { Authorization: 'Bearer not-a-key' } });
   expect(r2.status()).toBe(401);
   expect(await r2.json()).toEqual({ error: { code: 'unauthenticated', message: 'Missing or invalid credentials.' } });
-  var r3 = await request.get('https://api.stonewake.ai/v1/me', { headers: { Authorization: 'Basic abc' } });
+  var r3 = await request.get(API + '/v1/me', { headers: { Authorization: 'Basic abc' } });
   expect(r3.status()).toBe(401);
   expect(await r3.json()).toEqual({ error: { code: 'unauthenticated', message: 'Missing or invalid credentials.' } });
-  var r4 = await request.get('https://api.stonewake.ai/v1/portfolio', { headers: { Authorization: 'Bearer swk_live_invalid000000000000000000000000' } });
+  var r4 = await request.get(API + '/v1/portfolio', { headers: { Authorization: 'Bearer swk_live_invalid000000000000000000000000' } });
   expect(r4.status()).toBe(401);
 });
 
-test('api 5 portfolio list', async ({ request }) => {
-  var r = await request.get('https://api.stonewake.ai/v1/portfolio?limit=2', { headers: { Authorization: 'Bearer ' + KEY } });
+test('api 5 portfolio list', { tag: ['@api', '@regression'] }, async ({ request }) => {
+  var r = await request.get(API + '/v1/portfolio?limit=2', { headers: { Authorization: 'Bearer ' + KEY } });
   expect(r.status()).toBe(200);
   var b = await r.json();
   expect(Array.isArray(b.data)).toBe(true);
@@ -83,21 +90,21 @@ test('api 5 portfolio list', async ({ request }) => {
     expect(i.completeness).toBeGreaterThanOrEqual(0);
     expect(i.completeness).toBeLessThanOrEqual(1);
   }
-  var r2 = await request.get('https://api.stonewake.ai/v1/portfolio?limit=100', { headers: { Authorization: 'Bearer ' + KEY } });
+  var r2 = await request.get(API + '/v1/portfolio?limit=100', { headers: { Authorization: 'Bearer ' + KEY } });
   expect(r2.status()).toBe(200);
   var b2 = await r2.json();
   expect(b2.limit).toBe(100);
-  var r3 = await request.get('https://api.stonewake.ai/v1/portfolio?limit=-1', { headers: { Authorization: 'Bearer ' + KEY } });
+  var r3 = await request.get(API + '/v1/portfolio?limit=-1', { headers: { Authorization: 'Bearer ' + KEY } });
   expect(r3.status()).toBe(422);
-  var r4 = await request.get('https://api.stonewake.ai/v1/portfolio?limit=abc', { headers: { Authorization: 'Bearer ' + KEY } });
+  var r4 = await request.get(API + '/v1/portfolio?limit=abc', { headers: { Authorization: 'Bearer ' + KEY } });
   expect(r4.status()).toBe(422);
-  var r5 = await request.get('https://api.stonewake.ai/v1/portfolio?limit=100000', { headers: { Authorization: 'Bearer ' + KEY } });
+  var r5 = await request.get(API + '/v1/portfolio?limit=100000', { headers: { Authorization: 'Bearer ' + KEY } });
   expect(r5.status()).toBe(422);
   expect((await r5.json()).detail[0].msg).toBe('Input should be less than or equal to 100');
 });
 
-test('api 6 portfolio summary', async ({ request }) => {
-  var r = await request.get('https://api.stonewake.ai/v1/portfolio/summary', { headers: { Authorization: 'Bearer ' + KEY } });
+test('api 6 portfolio summary', { tag: ['@api', '@regression'] }, async ({ request }) => {
+  var r = await request.get(API + '/v1/portfolio/summary', { headers: { Authorization: 'Bearer ' + KEY } });
   expect(r.status()).toBe(200);
   var s = await r.json();
   expect(Object.keys(s.statuses).sort()).toEqual(['amber', 'green', 'insufficient', 'not_assessed', 'red', 'sole_trader']);
@@ -109,12 +116,12 @@ test('api 6 portfolio summary', async ({ request }) => {
   expect(Number.isInteger(s.active_exposures)).toBe(true);
   expect(Number.isInteger(s.reviews_overdue)).toBe(true);
   expect(sum).toBe(s.active_exposures);
-  var r2 = await request.get('https://api.stonewake.ai/v1/portfolio?limit=1', { headers: { Authorization: 'Bearer ' + KEY } });
+  var r2 = await request.get(API + '/v1/portfolio?limit=1', { headers: { Authorization: 'Bearer ' + KEY } });
   expect((await r2.json()).total).toBe(s.active_exposures);
 });
 
-test('api 7 entities', async ({ request }) => {
-  var r = await request.get('https://api.stonewake.ai/v1/entities?limit=2', { headers: { Authorization: 'Bearer ' + KEY } });
+test('api 7 entities', { tag: ['@api', '@regression'] }, async ({ request }) => {
+  var r = await request.get(API + '/v1/entities?limit=2', { headers: { Authorization: 'Bearer ' + KEY } });
   expect(r.status()).toBe(200);
   var b = await r.json();
   expect(Array.isArray(b.items)).toBe(true);
@@ -128,29 +135,29 @@ test('api 7 entities', async ({ request }) => {
     expect(typeof i.kind).toBe('string');
   }
   var first = b.items[0];
-  var r2 = await request.get('https://api.stonewake.ai/v1/entities/' + first.id, { headers: { Authorization: 'Bearer ' + KEY } });
+  var r2 = await request.get(API + '/v1/entities/' + first.id, { headers: { Authorization: 'Bearer ' + KEY } });
   expect(r2.status()).toBe(200);
   expect(await r2.json()).toEqual(first);
 });
 
-test('api 8 entity not found', async ({ request }) => {
-  var r = await request.get('https://api.stonewake.ai/v1/entities/999999', { headers: { Authorization: 'Bearer ' + KEY } });
+test('api 8 entity not found', { tag: ['@api', '@regression'] }, async ({ request }) => {
+  var r = await request.get(API + '/v1/entities/999999', { headers: { Authorization: 'Bearer ' + KEY } });
   expect(r.status()).toBe(404);
   expect(await r.json()).toEqual({ error: { code: 'not_found', message: 'Resource not found.' } });
-  var r2 = await request.get('https://api.stonewake.ai/v1/entities/abc', { headers: { Authorization: 'Bearer ' + KEY } });
+  var r2 = await request.get(API + '/v1/entities/abc', { headers: { Authorization: 'Bearer ' + KEY } });
   expect(r2.status()).toBe(422);
   var b2 = await r2.json();
   expect(b2.error.code).toBe('validation_failed');
   expect(b2.detail[0].type).toBe('int_parsing');
   expect(b2.detail[0].loc).toEqual(['path', 'entity_id']);
-  var r3 = await request.get('https://api.stonewake.ai/v1/nodes/999999999', { headers: { Authorization: 'Bearer ' + KEY } });
+  var r3 = await request.get(API + '/v1/nodes/999999999', { headers: { Authorization: 'Bearer ' + KEY } });
   expect(r3.status()).toBe(404);
-  var r4 = await request.get('https://api.stonewake.ai/v1/entities/999999');
+  var r4 = await request.get(API + '/v1/entities/999999');
   expect(r4.status()).toBe(401);
 });
 
-test('api 9 countries', async ({ request }) => {
-  var r = await request.get('https://api.stonewake.ai/v1/countries', { headers: { Authorization: 'Bearer ' + KEY } });
+test('api 9 countries', { tag: ['@api', '@regression'] }, async ({ request }) => {
+  var r = await request.get(API + '/v1/countries', { headers: { Authorization: 'Bearer ' + KEY } });
   expect(r.status()).toBe(200);
   var b = await r.json();
   expect(Array.isArray(b.regions)).toBe(true);
@@ -161,7 +168,7 @@ test('api 9 countries', async ({ request }) => {
   }
   var de = b.countries.find((x: any) => x.iso3 == 'DEU');
   expect(de.name).toBe('Germany');
-  var r2 = await request.get('https://api.stonewake.ai/v1/countries/DEU', { headers: { Authorization: 'Bearer ' + KEY } });
+  var r2 = await request.get(API + '/v1/countries/DEU', { headers: { Authorization: 'Bearer ' + KEY } });
   expect(r2.status()).toBe(200);
   var d = await r2.json();
   expect(d.iso3).toBe('DEU');
@@ -170,12 +177,12 @@ test('api 9 countries', async ({ request }) => {
   expect(d.region).toBe('europe');
   expect(d.risk.score).toBeGreaterThanOrEqual(0);
   expect(d.risk.score).toBeLessThanOrEqual(100);
-  var r3 = await request.get('https://api.stonewake.ai/v1/countries/ZZZ', { headers: { Authorization: 'Bearer ' + KEY } });
+  var r3 = await request.get(API + '/v1/countries/ZZZ', { headers: { Authorization: 'Bearer ' + KEY } });
   expect(r3.status()).toBe(404);
 });
 
-test('api 10 search', async ({ request }) => {
-  var r = await request.get('https://api.stonewake.ai/v1/search?q=bank&limit=3', { headers: { Authorization: 'Bearer ' + KEY } });
+test('api 10 search', { tag: ['@api', '@regression'] }, async ({ request }) => {
+  var r = await request.get(API + '/v1/search?q=bank&limit=3', { headers: { Authorization: 'Bearer ' + KEY } });
   expect(r.status()).toBe(200);
   var b = await r.json();
   expect(b.query).toBe('bank');
@@ -187,14 +194,14 @@ test('api 10 search', async ({ request }) => {
     expect(h.score).toBeGreaterThanOrEqual(0);
     expect(h.score).toBeLessThanOrEqual(1);
   }
-  var r2 = await request.get('https://api.stonewake.ai/v1/search?q=zzzzqqqxxxyy', { headers: { Authorization: 'Bearer ' + KEY } });
+  var r2 = await request.get(API + '/v1/search?q=zzzzqqqxxxyy', { headers: { Authorization: 'Bearer ' + KEY } });
   expect((await r2.json()).hits).toEqual([]);
-  var r3 = await request.get('https://api.stonewake.ai/v1/search', { headers: { Authorization: 'Bearer ' + KEY } });
+  var r3 = await request.get(API + '/v1/search', { headers: { Authorization: 'Bearer ' + KEY } });
   expect(r3.status()).toBe(422);
-  var r4 = await request.get('https://api.stonewake.ai/v1/search?q=a', { headers: { Authorization: 'Bearer ' + KEY } });
+  var r4 = await request.get(API + '/v1/search?q=a', { headers: { Authorization: 'Bearer ' + KEY } });
   expect(r4.status()).toBe(422);
   expect((await r4.json()).detail[0].msg).toBe('String should have at least 2 characters');
-  var r5 = await request.get('https://api.stonewake.ai/v1/search?q=bank&limit=99999', { headers: { Authorization: 'Bearer ' + KEY } });
+  var r5 = await request.get(API + '/v1/search?q=bank&limit=99999', { headers: { Authorization: 'Bearer ' + KEY } });
   expect(r5.status()).toBe(422);
   expect((await r5.json()).detail[0].msg).toBe('Input should be less than or equal to 50');
 });
