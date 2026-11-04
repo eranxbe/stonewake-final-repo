@@ -23,8 +23,11 @@ const uiProjects = browsers.map((browser) => {
   }
   return {
     name: `ui-${browser}`,
-    testMatch: /ui\.spec\.ts/,
-    use: { ...device },
+    testMatch: /ui\/.*\.spec\.ts/,
+    use: {
+      ...device,
+      baseURL: process.env.STONEWAKE_APP_URL,
+    },
   };
 });
 
@@ -43,7 +46,10 @@ export default defineConfig({
     ...uiProjects,
     {
       name: 'api',
-      testMatch: /api\.spec\.ts/,
+      testMatch: /api\/.*\.spec\.ts/,
+      use: {
+        baseURL: process.env.STONEWAKE_API_URL,
+      },
     },
   ],
 });

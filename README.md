@@ -23,10 +23,23 @@ add this tagging convention to the existing tests (and their relevant suite resp
 tag: ['@api', '@regression']
 `
 
+- modular test infra
+`
+take a look at my test files. I want to expand the project and create a modular test-automation infra...
+`
 
 
+## Layout
 
-todos:
-- make sure pages dont take the baseurl and headers in each test
-- create proper infra
+```
+src/
+  constants/   env, routes, messages, test data
+  clients/     ApiClient
+  pages/       page objects
+  fixtures/    Playwright test.extend
+tests/
+  ui/          domain UI specs
+  api/         domain API specs
+```
 
+Import `{ test, expect }` from `src/fixtures/test` in new specs. Tag with `@ui`/`@api` plus `@smoke`/`@regression`.
